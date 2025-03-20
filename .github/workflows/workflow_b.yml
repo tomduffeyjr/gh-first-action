@@ -14,20 +14,15 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: pr_number
+          name: pr-number  # Artifact name used in Workflow A
           path: ./artifact
 
       - name: Unzip artifact
         run: |
-          unzip ./artifact/pr_number.zip -d ./artifact
+          unzip ./artifact/pr-number.zip -d ./artifact  # Unzips the artifact
 
-      - name: Read PR Number
-        id: read-pr-number
+      - name: Read and Echo PR Number
         run: |
+          # Read the contents of the pr_number.txt file and echo it
           PR_NUMBER=$(cat ./artifact/pr_number.txt)
           echo "PR Number: $PR_NUMBER"
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_ENV
-
-      - name: Log PR Number
-        run: |
-          echo "Retrieved PR Number: ${{ env.pr_number }}"
