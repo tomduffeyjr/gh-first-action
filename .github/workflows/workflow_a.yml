@@ -5,26 +5,26 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  store-pr-number:
+  store-pr-number-and-changed-files:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR commit
+      # Checkout the PR branch
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}  # Checkout the commit from the feature branch (PR head)
 
+      # Get the PR number and save it to a txt file
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
-      - name: Get Changed Files
+      # Get the list of changed files between the base and head commits
+      - name: Get list of changed files
         run: |
-          # Fetch the base commit SHA for comparison (main branch or base branch)
+          # Fetch the base and head commit SHAs
           BASE_COMMIT=${{ github.event.pull_request.base.sha }}
           HEAD_COMMIT=${{ github.sha }}
-
           echo "Base commit SHA: $BASE_COMMIT"
           echo "Head commit SHA: $HEAD_COMMIT"
-
+          
           # Get the list of changed files between base and head commits
           CHANGED_FILES=$(git diff --name-only $BASE_COMMIT $HEAD_COMMIT)
 
@@ -34,12 +34,14 @@ jobs:
           # Save the filtered files to a txt file
           echo "$FILTERED_FILES" > changed_files.txt
 
-      - name: Upload PR Number and Changed Files as Artifacts
+      # Upload PR Number as an artifact
+      - name: Upload PR Number as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: pr-number
           path: pr_number.txt
 
+      # Upload Changed Files as an artifact
       - name: Upload Changed Files as Artifact
         uses: actions/upload-artifact@v4
         with:
