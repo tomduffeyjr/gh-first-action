@@ -1,15 +1,55 @@
 name: Workflow B
 
 on:
-    workflow_run:  
-        workflows: ["Workflow A"]
-        types:
-            - completed
+  workflow_run:
+    workflows: ["Workflow A"]
+    types:
+      - completed
 
 jobs:
-    run_on_workflow_a_success:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        runs-on: ubuntu-latest
-        steps:
-            - name: Run on Workflow A success
-              run: echo "Workflow A completed successfully"
+  run_on_workflow_a_success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Workflow A Success
+        run: echo "Workflow A completed successfully"
+
+  download_context_artifact:
+    runs-on: ubuntu-latest
+    needs: [run_on_workflow_a_success]
+    steps:
+      - name: Download artifact metadata
+        uses: actions/github-script@v6
+        id: find-artifact
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+
+            const artifact = artifacts.data.artifacts.find(a => a.name === "pr-number");
+            if (!artifact) throw new Error("Artifact 'pr-number' not found");
+
+            return artifact;
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: pr-number
+          path: ./artifact
+
+      - name: Parse artifact
+        id: parse-artifact
+        run: |
+          content=$(cat ./artifact/pr_number.txt)
+          echo "pr_number=$content" >> $GITHUB_ENV
+
+  log_context_value:
+    needs: [download_context_artifact]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log PR Number
+        run: |
+          echo "PR Number: ${{ env.pr_number }}"
