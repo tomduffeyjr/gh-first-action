@@ -5,7 +5,7 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  store-pr-number:
+  store-pr-number-and-changed-files:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR code
@@ -16,16 +16,12 @@ jobs:
 
       - name: Get Changed Files
         run: |
-          # Checkout the base branch to calculate the diff
+          # Fetch the base branch and switch to it
           git fetch origin ${{ github.event.pull_request.base.ref }}
           git checkout ${{ github.event.pull_request.base.ref }}
-
+          
           # Get the list of changed files between the base commit and head commit
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
-
-          # Debug output to make sure we have the correct changed files
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
 
           # Filter files with .c, .cpp, .h, .hpp extensions
           FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
@@ -34,17 +30,4 @@ jobs:
           if [ -n "$FILTERED_FILES" ]; then
             echo "$FILTERED_FILES" > changed_files.txt
           else
-            echo "No relevant files changed." > changed_files.txt
-          fi
-
-      - name: Upload PR Number as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-number
-          path: pr_number.txt
-
-      - name: Upload Changed Files as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: changed-files
-          path: changed_files.txt
+            echo "No relevant files changed.
