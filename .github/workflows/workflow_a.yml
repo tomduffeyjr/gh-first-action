@@ -16,7 +16,10 @@ jobs:
 
       - name: Get Changed Files
         run: |
-          # List all changed files in the PR
+          # Ensure we're on the correct commit and that git diff can be run properly
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth 1
+
+          # List all changed files in the PR by comparing the base and head commits
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
           # Filter files with .c, .cpp, .h, .hpp extensions
