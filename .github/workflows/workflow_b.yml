@@ -1,4 +1,4 @@
-name: List Artifacts
+name: List and Echo Artifact Contents
 
 on:
   workflow_run:
@@ -7,7 +7,7 @@ on:
       - completed
 
 jobs:
-  list-artifacts:
+  list-and-echo-artifact:
     runs-on: ubuntu-latest
     steps:
       # Install GitHub CLI
@@ -30,3 +30,22 @@ jobs:
             echo "Available artifacts:"
             echo "$ARTIFACTS"
           fi
+
+      # Download the artifact (replace "pr-number" with the artifact name you want)
+      - name: Download and Echo Artifact Contents
+        env:
+          GH_TOKEN: ${{ github.token }}  # Use GitHub token for authentication
+        run: |
+          # Replace 'pr-number' with the name of your artifact
+          ARTIFACT_NAME="pr-number" 
+          
+          # Download the artifact
+          echo "Downloading artifact $ARTIFACT_NAME"
+          gh api repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_NAME}/zip --output artifact.zip
+          
+          # Unzip the downloaded artifact
+          unzip artifact.zip -d artifact_contents
+
+          # Echo the contents of the artifact (assuming it's a txt file)
+          echo "Contents of the artifact:"
+          cat artifact_contents/*  # Assuming there's only one file in the artifact
