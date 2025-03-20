@@ -1,12 +1,21 @@
-name: Workflow A
+name: Store PR Number
 
 on:
-    push:
-        branches: ["main"]
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
-    some_job:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Some ste
-              run: echo "Hello"
+  store-pr-number:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v44
+
+      - name: Get PR Number
+        run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
+
+      - name: Upload PR Number as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-number
+          path: pr_number.txt
