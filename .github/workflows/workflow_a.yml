@@ -1,44 +1,39 @@
-name: Workflow A
+name: Filter Changed Files as Go Slice
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  store-pr-number-and-changed-files:
+  filter-files:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code of the PR
+      # Checkout the PR branch
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # Get PR Number and save it to a txt file
-      - name: Get PR Number
-        run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
-
-      # List changed files in the PR
-      - name: List Changed Files
+      # Get changed files
+      - name: Get changed files
+        id: changed-files
         run: |
-          # Get list of changed files in the PR
-          git fetch origin ${{ github.event.pull_request.base.ref }} # Fetch base branch
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }})
+          # Get list of changed files in the PR (compare base and head commits)
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          
+          # Filter for .c, .cpp, .h, .hpp extensions
+          FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$' || true)
+          
+          # Format as Go slice
+          GO_SLICE="[]string{"
+          while IFS= read -r line; do
+            GO_SLICE="$GO_SLICE\"$line\", "
+          done <<< "$FILTERED_FILES"
+          GO_SLICE="${GO_SLICE%, }"  # Remove trailing comma and space
+          GO_SLICE="$GO_SLICE}"
 
-          # Filter files with .c, .cpp, .h, .hpp extensions
-          FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
+          # Set the formatted Go slice as an output
+          echo "go_slice=$GO_SLICE" >> $GITHUB_ENV
 
-          # Save the filtered files to a txt file
-          echo "$FILTERED_FILES" > changed_files.txt
-
-      # Upload PR Number as Artifact
-      - name: Upload PR Number as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr-number
-          path: pr_number.txt
-
-      # Upload Changed Files as Artifact
-      - name: Upload Changed Files as Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: changed-files
-          path: changed_files.txt
+      # Output the filtered files as Go slice
+      - name: Output filtered files as Go slice
+        run: |
+          echo "Go slice: ${{ env.go_slice }}"
