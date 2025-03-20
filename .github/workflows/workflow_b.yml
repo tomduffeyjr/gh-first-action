@@ -2,7 +2,7 @@ name: List and Echo Artifact Contents
 
 on:
   workflow_run:
-    workflows: ["Track PR Number"]  # Trigger on completion of another workflow (can be changed)
+    workflows: ["Track PR Number"]  # Replace with your workflow name
     types:
       - completed
 
@@ -15,37 +15,35 @@ jobs:
         run: |
           sudo apt-get install gh
 
-      # List artifacts available in the repository
-      - name: List Artifacts
+      # List artifacts and get the artifact ID for 'pr-number'
+      - name: Get Artifact ID
+        id: get-artifact-id
         env:
-          GH_TOKEN: ${{ github.token }}  # Use GitHub token for authentication
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Fetch the list of artifacts
-          ARTIFACTS=$(gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[].name')
+          # Fetch the artifact list and find the ID of 'pr-number'
+          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name=="pr-number") | .id')
           
-          # Check if there are any artifacts and echo the list
-          if [ -z "$ARTIFACTS" ]; then
-            echo "No artifacts found."
-          else
-            echo "Available artifacts:"
-            echo "$ARTIFACTS"
+          if [ -z "$ARTIFACT_ID" ]; then
+            echo "Artifact 'pr-number' not found."
+            exit 1
           fi
 
-      # Download the artifact (replace "pr-number" with the artifact name you want)
-      - name: Download and Echo Artifact Contents
+          echo "Artifact ID for 'pr-number': $ARTIFACT_ID"
+          echo "::set-output name=artifact_id::$ARTIFACT_ID"
+
+      # Download and Extract the artifact
+      - name: Download and Extract Artifact
         env:
-          GH_TOKEN: ${{ github.token }}  # Use GitHub token for authentication
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Use the artifact ID from the previous step
+          ARTIFACT_ID=${{ steps.get-artifact-id.outputs.artifact_id }}
+          gh api repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID/zip > artifact.zip
           
-          ARTIFACT_NAME="pr-number" 
-          
-          
-          echo "Downloading artifact $ARTIFACT_NAME"
-          gh api repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_NAME}/zip > artifact.zip
-          
-          
+          # Unzip the artifact
           unzip artifact.zip -d artifact_contents
 
-        
+          # Echo the contents of the artifact (assuming it's a text file)
           echo "Contents of the artifact:"
-          cat artifact_contents/*  
+          cat artifact_contents/*
