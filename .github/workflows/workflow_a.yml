@@ -1,53 +1,24 @@
-name: Process PR Changes
+name: Track PR Number
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened, synchronize]
 
 jobs:
-  process-pr:
+  track-pr-number:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout the PR branch
+      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Get PR Number and save it to a txt file
+      # Get the PR number and save it to a file
       - name: Get PR Number
-        run: |
-          echo "PR Number: ${{ github.event.pull_request.number }}" > pr_number.txt
+        run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
-      # Get the list of changed files and format as Go slice
-      - name: Get Changed Files as Go Slice
-        run: |
-          # Get list of changed files in the PR
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
-          
-          # Filter for .c, .cpp, .h, .hpp extensions
-          FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$' || true)
-          
-          # Format as Go slice
-          GO_SLICE="[]string{"
-          while IFS= read -r line; do
-            GO_SLICE="$GO_SLICE\"$line\", "
-          done <<< "$FILTERED_FILES"
-          GO_SLICE="${GO_SLICE%, }"  # Remove trailing comma and space
-          GO_SLICE="$GO_SLICE}"
-
-          # Save the Go slice to a txt file
-          echo "$GO_SLICE" > go_slice.txt
-
-      # Upload PR Number as an Artifact
-      - name: Upload PR Number Artifact
+      # Upload the PR number as an artifact
+      - name: Upload PR Number as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: pr-number
           path: pr_number.txt
-
-      # Upload Go Slice as an Artifact
-      - name: Upload Go Slice Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-slice
-          path: go_slice.txt
