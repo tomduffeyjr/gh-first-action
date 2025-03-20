@@ -17,6 +17,10 @@ jobs:
           name: pr-number
           path: ./artifact
 
+      - name: Unzip artifact
+        run: |
+          unzip ./artifact/pr_number.zip -d ./artifact
+
       - name: Read PR Number
         id: read-pr-number
         run: |
@@ -25,7 +29,5 @@ jobs:
           echo "pr_number=$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Log PR Number
-        env:
-          PR_NUMBER: ${{ env.pr_number }}
         run: |
-          echo "Retrieved PR Number: $PR_NUMBER"
+          echo "Retrieved PR Number: ${{ env.pr_number }}"
