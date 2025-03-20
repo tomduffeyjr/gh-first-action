@@ -1,0 +1,34 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Get PR details
+    - name: Get PR details
+      id: pr_details
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const prNumber = context.payload.pull_request.number;
+          const changedFiles = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: prNumber
+          });
+          core.setOutput("pr_number", prNumber);
+          core.setOutput("changed_files", JSON.stringify(changedFiles.data.map(file => file.filename)));
+
+    # 3. Run your daggerized Go program
+    - name: Run Daggerized Program
+      run: |
+        go run your-dagger-program.go --pr-number ${{ steps.pr_details.outputs.pr_number }} --changed-files '${{ steps.pr_details.outputs.changed_files }}'

@@ -1,0 +1,38 @@
+name: Filter Changed Files as Go Slice
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  filter-files:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the PR branch
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Get changed files
+      - name: Get changed files
+        id: changed-files
+        run: |
+          # Get list of changed files in the PR
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          
+          # Filter for .c, .cpp, .h, .hpp extensions
+          FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.c$|\.cpp$|\.h$|\.hpp$' || true)
+          
+          # Format as Go slice
+          GO_SLICE="[]string{"
+          while IFS= read -r line; do
+            GO_SLICE="$GO_SLICE\"$line\", "
+          done <<< "$FILTERED_FILES"
+          GO_SLICE="${GO_SLICE%, }"  # Remove trailing comma and space
+          GO_SLICE="$GO_SLICE}"
+
+          echo "::set-output name=go_slice::$GO_SLICE"
+
+      # Output the filtered files as Go slice
+      - name: Output filtered files as Go slice
+        run: |
+          echo "Go slice: ${{ steps.changed-files.outputs.go_slice }}"
