@@ -2,7 +2,7 @@ name: Workflow A
 
 on:
     push:
-        branches: ["testdonotmerge"]
+        branches: ["main"]
 
 jobs:
     some_job:
