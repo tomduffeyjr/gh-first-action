@@ -14,12 +14,12 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: pr-number  # Artifact name used in Workflow A
+          name: pr_number  # Artifact name used in Workflow A
           path: ./artifact
 
       - name: Unzip artifact
         run: |
-          unzip ./artifact/pr-number.zip -d ./artifact  # Unzips the artifact
+          unzip ./artifact/pr_number.zip -d ./artifact  # Unzips the artifact
 
       - name: Read and Echo PR Number
         run: |
