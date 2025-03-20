@@ -14,8 +14,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: pr-number  # This should match the artifact name from Workflow A
+          name: pr-number  # Artifact name from Workflow A
           path: ./artifact
+          # Use the correct run_id of Workflow A
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Unzip the artifact
         run: |
