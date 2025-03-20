@@ -11,24 +11,31 @@ jobs:
       - name: Checkout PR code
         uses: actions/checkout@v4
 
-      - name: Checkout base branch
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git checkout ${{ github.event.pull_request.base.ref }}
-
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
       - name: Get Changed Files
         run: |
-          # Get the list of changed files between the base and head commits
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          # Checkout the base branch to calculate the diff
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git checkout ${{ github.event.pull_request.base.ref }}
+
+          # Get the list of changed files between the base commit and head commit
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+
+          # Debug output to make sure we have the correct changed files
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
 
           # Filter files with .c, .cpp, .h, .hpp extensions
           FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
 
           # Save the filtered files to a txt file
-          echo "$FILTERED_FILES" > changed_files.txt
+          if [ -n "$FILTERED_FILES" ]; then
+            echo "$FILTERED_FILES" > changed_files.txt
+          else
+            echo "No relevant files changed." > changed_files.txt
+          fi
 
       - name: Upload PR Number as Artifact
         uses: actions/upload-artifact@v4
