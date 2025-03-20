@@ -14,11 +14,15 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: pr-number  # This must match the artifact name from Workflow A
+          name: pr-number  # This should match the artifact name from Workflow A
           path: ./artifact
+
+      - name: Unzip the artifact
+        run: |
+          unzip ./artifact/pr-number.zip -d ./artifact  # Unzips the artifact to ./artifact folder
 
       - name: Read and Echo PR Number
         run: |
-          # Directly access the pr_number.txt file
+          # Access the pr_number.txt file from the unzipped folder and echo its contents
           PR_NUMBER=$(cat ./artifact/pr_number.txt)
           echo "PR Number: $PR_NUMBER"
