@@ -10,9 +10,10 @@ jobs:
   list-artifacts:
     runs-on: ubuntu-latest
     steps:
-      # Set up GitHub CLI (gh)
+      # Install GitHub CLI
       - name: Set up GitHub CLI
-        uses: cli/gh-actions@v2
+        run: |
+          sudo apt-get install gh
 
       # List artifacts available in the repository
       - name: List Artifacts
