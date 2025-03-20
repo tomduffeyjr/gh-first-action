@@ -8,25 +8,19 @@ jobs:
   store-pr-number-and-changed-files:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the PR branch
+      # Checkout the PR code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Get the PR number and save it to a txt file
+      # Get the PR Number and save it to a txt file
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
-      # Get the list of changed files between the base and head commits
-      - name: Get list of changed files
+      # Get the list of changed files in the PR and filter by extensions
+      - name: Get Changed Files
         run: |
-          # Fetch the base and head commit SHAs
-          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
-          HEAD_COMMIT=${{ github.sha }}
-          echo "Base commit SHA: $BASE_COMMIT"
-          echo "Head commit SHA: $HEAD_COMMIT"
-          
-          # Get the list of changed files between base and head commits
-          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT $HEAD_COMMIT)
+          # Get the list of changed files in the PR
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
 
           # Filter files with .c, .cpp, .h, .hpp extensions
           FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
@@ -34,14 +28,14 @@ jobs:
           # Save the filtered files to a txt file
           echo "$FILTERED_FILES" > changed_files.txt
 
-      # Upload PR Number as an artifact
+      # Upload PR Number as Artifact
       - name: Upload PR Number as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: pr-number
           path: pr_number.txt
 
-      # Upload Changed Files as an artifact
+      # Upload Changed Files as Artifact
       - name: Upload Changed Files as Artifact
         uses: actions/upload-artifact@v4
         with:
