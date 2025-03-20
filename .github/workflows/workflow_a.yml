@@ -8,18 +8,20 @@ jobs:
   store-pr-number:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout PR code
         uses: actions/checkout@v4
+
+      - name: Checkout base branch
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git checkout ${{ github.event.pull_request.base.ref }}
 
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
       - name: Get Changed Files
         run: |
-          # Ensure we're on the correct commit and that git diff can be run properly
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth 1
-
-          # List all changed files in the PR by comparing the base and head commits
+          # Get the list of changed files between the base and head commits
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
           # Filter files with .c, .cpp, .h, .hpp extensions
