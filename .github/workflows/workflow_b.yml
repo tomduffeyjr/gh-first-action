@@ -36,16 +36,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}  # Use GitHub token for authentication
         run: |
-          # Replace 'pr-number' with the name of your artifact
+          
           ARTIFACT_NAME="pr-number" 
           
-          # Download the artifact
-          echo "Downloading artifact $ARTIFACT_NAME"
-          gh api repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_NAME}/zip --output artifact.zip
           
-          # Unzip the downloaded artifact
+          echo "Downloading artifact $ARTIFACT_NAME"
+          gh api repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_NAME}/zip > artifact.zip
+          
+          
           unzip artifact.zip -d artifact_contents
 
-          # Echo the contents of the artifact (assuming it's a txt file)
+        
           echo "Contents of the artifact:"
-          cat artifact_contents/*  # Assuming there's only one file in the artifact
+          cat artifact_contents/*  
