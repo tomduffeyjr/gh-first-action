@@ -8,19 +8,20 @@ jobs:
   store-pr-number-and-changed-files:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the PR code
+      # Checkout the code of the PR
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Get the PR Number and save it to a txt file
+      # Get PR Number and save it to a txt file
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
-      # Get the list of changed files in the PR and filter by extensions
-      - name: Get Changed Files
+      # List changed files in the PR
+      - name: List Changed Files
         run: |
-          # Get the list of changed files in the PR
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          # Get list of changed files in the PR
+          git fetch origin ${{ github.event.pull_request.base.ref }} # Fetch base branch
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...${{ github.sha }})
 
           # Filter files with .c, .cpp, .h, .hpp extensions
           FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
