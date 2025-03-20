@@ -5,35 +5,36 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  store-pr-number-and-changed-files:
+  store-pr-number:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR code
+      - name: Checkout PR commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}  # Checkout the commit from the feature branch (PR head)
 
       - name: Get PR Number
         run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
       - name: Get Changed Files
         run: |
-          # Fetch the base branch and switch to it
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git checkout ${{ github.event.pull_request.base.ref }}
-          
-          # Get the list of changed files between the base commit and head commit
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          # Fetch the base commit SHA for comparison (main branch or base branch)
+          BASE_COMMIT=${{ github.event.pull_request.base.sha }}
+          HEAD_COMMIT=${{ github.sha }}
+
+          echo "Base commit SHA: $BASE_COMMIT"
+          echo "Head commit SHA: $HEAD_COMMIT"
+
+          # Get the list of changed files between base and head commits
+          CHANGED_FILES=$(git diff --name-only $BASE_COMMIT $HEAD_COMMIT)
 
           # Filter files with .c, .cpp, .h, .hpp extensions
           FILTERED_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(c|cpp|h|hpp)$')
 
           # Save the filtered files to a txt file
-          if [ -n "$FILTERED_FILES" ]; then
-            echo "$FILTERED_FILES" > changed_files.txt
-          else
-            echo "No relevant files changed." > changed_files.txt
-          fi
+          echo "$FILTERED_FILES" > changed_files.txt
 
-      - name: Upload PR Number as Artifact
+      - name: Upload PR Number and Changed Files as Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pr-number
