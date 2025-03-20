@@ -1,22 +1,27 @@
-name: Filter Changed Files as Go Slice
+name: Process PR Changes
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  filter-files:
+  process-pr:
     runs-on: ubuntu-latest
+
     steps:
       # Checkout the PR branch
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Get changed files
-      - name: Get changed files
-        id: changed-files
+      # Get PR Number and save it to a txt file
+      - name: Get PR Number
         run: |
-          # Get list of changed files in the PR (compare base and head commits)
+          echo "PR Number: ${{ github.event.pull_request.number }}" > pr_number.txt
+
+      # Get the list of changed files and format as Go slice
+      - name: Get Changed Files as Go Slice
+        run: |
+          # Get list of changed files in the PR
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
           
           # Filter for .c, .cpp, .h, .hpp extensions
@@ -30,10 +35,19 @@ jobs:
           GO_SLICE="${GO_SLICE%, }"  # Remove trailing comma and space
           GO_SLICE="$GO_SLICE}"
 
-          # Set the formatted Go slice as an output
-          echo "go_slice=$GO_SLICE" >> $GITHUB_ENV
+          # Save the Go slice to a txt file
+          echo "$GO_SLICE" > go_slice.txt
 
-      # Output the filtered files as Go slice
-      - name: Output filtered files as Go slice
-        run: |
-          echo "Go slice: ${{ env.go_slice }}"
+      # Upload PR Number as an Artifact
+      - name: Upload PR Number Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-number
+          path: pr_number.txt
+
+      # Upload Go Slice as an Artifact
+      - name: Upload Go Slice Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-slice
+          path: go_slice.txt
