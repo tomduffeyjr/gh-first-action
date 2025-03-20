@@ -1,4 +1,4 @@
-name: Store PR Number
+name: Workflow A
 
 on:
   pull_request:
